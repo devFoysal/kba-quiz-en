@@ -93,17 +93,27 @@ const QuizOne = () => {
   //   },
   // ];
   const { quizLevel, quizStart, answerLoading, finalResult } = useSelector(
-    (state) => state.quiz
+    state => state.quiz
   );
+
+  const user = useSelector(state => state.auth.user);
   const [quiz, setQuiz] = useState([]);
   const [quizStartTime, setQuizStartTime] = useState("");
   const [quizALL, setQuizALL] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState(null);
   const [quizLoading, setQuizLoading] = useState(false);
+  const [quizEnd, setQuizEnd] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [quizError, setQuizError] = useState(
     `Sorry it is not possible to express quiz questions. Are you logged in? Or refresh the page`
   );
+
+  const [updateInputs, setUpdateInputs] = useState({
+    contactNumber: "",
+  });
+
+  const [updateErrors, setUpdateErrors] = useState({});
 
   const dispatch = useDispatch();
 
@@ -114,9 +124,9 @@ const QuizOne = () => {
     )}`;
     axios
       .get("quiz/all")
-      .then((res) => {
+      .then(res => {
         if (res.data && res.data.data) {
-          let quizData = res.data.data.filter((e) => e.id == quizLevel)[0];
+          let quizData = res.data.data.filter(e => e.id == quizLevel)[0];
           setQuiz(quizData);
           setQuizALL(res.data.data);
           setTimeLeft(quizData.duration);
@@ -126,7 +136,7 @@ const QuizOne = () => {
           setShowModal(true);
         }
       })
-      .catch((err) => {
+      .catch(err => {
         setQuizLoading(false);
         console.log(err.response);
         if (err.response && err.response.status == 401) {
@@ -138,7 +148,7 @@ const QuizOne = () => {
   }, []);
 
   useEffect(() => {
-    let data = quizALL.filter((e) => e.id == quizLevel)[0];
+    let data = quizALL.filter(e => e.id == quizLevel)[0];
     if (quizLevel >= 2 && quizLevel <= 3) {
       setQuiz(data);
       setCurrentQuestion(0);
@@ -155,7 +165,11 @@ const QuizOne = () => {
   const [colorbtn, setColorbtn] = useState(false);
   const [clickedId, setClickedId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
+  const [canceltSubmitQuiz, setCanceltSubmitQuiz] = useState(false);
   const [timeLeft, setTimeLeft] = useState(duration);
+
+  const [contactNumber, setContactNumber] = useState(null);
 
   const handleModal = (start = false) => {
     setShowModal(!showModal);
@@ -166,7 +180,16 @@ const QuizOne = () => {
     }
   };
 
-  const handleAnswerOptionClick = (id) => {
+  const finalQuizSubmit = (submit = false) => {
+    if (submit == true) {
+      submitUpdateData();
+    } else {
+      setShowMobileModal(false);
+      setCanceltSubmitQuiz(true);
+    }
+  };
+
+  const handleAnswerOptionClick = id => {
     setClickedId(id);
     setColorbtn(true);
     dispatch(
@@ -181,8 +204,13 @@ const QuizOne = () => {
       setCurrentQuestion(nextQuestion);
     } else {
       if (quizLevel == 3) {
-        setShowScore(true);
-        dispatch(submitAnswer(+Date.now()));
+        setQuizEnd(true);
+        if (user.contactNumber.length > 0) {
+          setShowScore(true);
+          dispatch(submitAnswer(+Date.now()));
+        } else {
+          setShowMobileModal(true);
+        }
       }
       dispatch(setQuizStart(false));
       dispatch(setQuizLevel(quizLevel + 1));
@@ -191,11 +219,62 @@ const QuizOne = () => {
     setClickedId(null);
   };
 
+  const handleUpdateInputChange = event => {
+    event.persist();
+    setUpdateInputs(inputs => ({
+      ...inputs,
+      [event.target.name]:
+        event.target.name == "avatar"
+          ? event.target.files[0]
+          : event.target.value,
+    }));
+  };
+
+  const submitUpdateData = async () => {
+    if (loading) {
+      alert("Please Wait... Dont be hurry. we are processing your data");
+      return;
+    }
+    const formData = new FormData();
+
+    Object.keys(updateInputs).forEach(function (key, index) {
+      formData.append(key, updateInputs[key]);
+      console.log(key, index);
+    });
+
+    try {
+      setLoading(true);
+      const res = await axios.post("/participant/update", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log(res);
+      setLoading(false);
+      if (res.data.success == true) {
+        setShowMobileModal(false);
+        setShowScore(true);
+        dispatch(submitAnswer(+Date.now()));
+      } else {
+      }
+    } catch (err) {
+      console.log(err.response);
+      setLoading(false);
+      if (err.response) setUpdateErrors(err.response.data);
+    }
+  };
+
   return (
     <Layout>
       <div className="quiz-app">
         <div className="container">
           <div className="row">
+            {canceltSubmitQuiz ? (
+              <div className="col-12 text-center">
+                Sorry We can't Submit your Quiz,Please Update your data
+              </div>
+            ) : null}
             <div className="col-12 text-center">
               {showScore ? (
                 <div className="row justify-content-center">
@@ -238,22 +317,28 @@ const QuizOne = () => {
                               intervalDelay={100}
                               renderer={Timer2}
                               precision={3}
-                              onTick={(e) => {
+                              onTick={e => {
                                 console.log(e);
                                 setTimeLeft(e.total);
                               }}
-                              onComplete={(e) => {
+                              onComplete={e => {
                                 dispatch(setQuizLevel(quizLevel + 1));
                                 if (quizLevel == 3) {
                                   dispatch(setQuizStart(false));
-                                  setShowScore(true);
-                                  dispatch(submitAnswer(+Date.now()));
+
+                                  setQuizEnd(true);
+                                  if (user.contactNumber.length > 0) {
+                                    setShowScore(true);
+                                    dispatch(submitAnswer(+Date.now()));
+                                  } else {
+                                    setShowMobileModal(true);
+                                  }
                                 }
                               }}
-                              onPause={(e) => {
+                              onPause={e => {
                                 console.log("pause");
                               }}
-                              onStop={(e) => {
+                              onStop={e => {
                                 console.log("Stop");
                               }}
                             />
@@ -281,7 +366,7 @@ const QuizOne = () => {
                     <div className="answer-section">
                       <div className="row">
                         {questions[currentQuestion].answers.map(
-                          (answerOption) => (
+                          answerOption => (
                             <div className="col-lg-6">
                               <button
                                 className={
@@ -304,9 +389,9 @@ const QuizOne = () => {
                 </>
               ) : quizLoading == true ? (
                 <span>Please wait ......</span>
-              ) : (
+              ) : !quizEnd ? (
                 <span>{quizError}</span>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -332,7 +417,7 @@ const QuizOne = () => {
                   class="btn-close"
                   data-bs-dismiss="modal"
                   aria-label="Close"
-                  onClick={(e) => handleModal(false)}
+                  onClick={e => handleModal(false)}
                 ></button>
               </div>
               <div class="modal-body">
@@ -402,9 +487,91 @@ const QuizOne = () => {
                   type="button"
                   class="btn btn-closes"
                   data-bs-dismiss="modal"
-                  onClick={(e) => handleModal(true)}
+                  onClick={e => handleModal(true)}
                 >
                   Quiz start
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Get Mobile and Picture  */}
+
+        <div
+          class={
+            showMobileModal ? "modal fade show d-block" : "modal fade d-none"
+          }
+          id="exampleModalLong"
+          tabindex="-1"
+          role="dialog"
+          aria-labelledby="exampleModalLongTitle"
+          aria-hidden="true"
+          style={{ overflow: "auto" }}
+        >
+          <div class="modal-dialog ">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">
+                  Please Update Information for Submitting Quiz
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                  onClick={e => finalQuizSubmit(false)}
+                ></button>
+              </div>
+              <div class="modal-body">
+                <div class="form-group row">
+                  <label for="contactNumber" class="col-sm-2 col-form-label">
+                    Contact Number
+                  </label>
+                  <div class="col-sm-10">
+                    <input
+                      type="email"
+                      class="form-control"
+                      name="contactNumber"
+                      placeholder="Please Input Your Contact Number"
+                      onChange={handleUpdateInputChange}
+                    />
+
+                    <small className="d-block text-danger mb-3">
+                      {updateErrors.errors &&
+                        updateErrors.errors.contactNumber &&
+                        updateErrors.errors.contactNumber[0]}
+                    </small>
+                  </div>
+                </div>
+
+                <div class="form-group row">
+                  <label for="contactNumber" class="col-sm-2 col-form-label">
+                    Update Profile Picture
+                  </label>
+                  <div class="col-sm-10">
+                    <input
+                      name="avatar"
+                      type="file"
+                      class="form-control"
+                      onChange={handleUpdateInputChange}
+                    />
+                    <small className="d-block text-danger mb-3">
+                      {updateErrors.errors &&
+                        updateErrors.errors.avatar &&
+                        updateErrors.errors.avatar[0]}
+                    </small>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-closes"
+                  data-bs-dismiss="modal"
+                  onClick={e => finalQuizSubmit(true)}
+                >
+                  {loading ? "Processing..." : "Quiz Submit"}
                 </button>
               </div>
             </div>

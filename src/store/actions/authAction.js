@@ -82,9 +82,6 @@ export const setSocialLogin = (service, token, value = null) => {
 };
 
 export const setLogout = () => {
-  cookies.remove("token");
-  cookies.remove("user");
-
   return dispatch => {
     dispatch({ type: SET_LOGOUT });
 
@@ -92,13 +89,17 @@ export const setLogout = () => {
       "token"
     )}`;
     return axios
-      .post("auth/logout")
+      .post("participant/logout")
       .then(response => {
         console.log(response);
+        cookies.remove("token");
+        cookies.remove("user");
         window.location.replace("/");
       })
       .catch(err => {
         dispatch({ type: ERROR_LOGOUT, err });
+        cookies.remove("token");
+        cookies.remove("user");
       });
   };
 };

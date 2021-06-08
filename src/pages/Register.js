@@ -98,6 +98,12 @@ const Register = () => {
                   onChange={handleRegInputChange}
                   name="avatar"
                 />
+
+                <small className="d-block text-danger mb-3">
+                  {regErrors.errors &&
+                    regErrors.errors.avatar &&
+                    regErrors.errors.avatar[0]}
+                </small>
               </div>
               <div class="form-group">
                 <label for="exampleInputEmail1">Email</label>
