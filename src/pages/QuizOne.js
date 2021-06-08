@@ -41,57 +41,6 @@ function replaceNumbers(input) {
 }
 
 const QuizOne = () => {
-  // const questions = [
-  //   {
-  //     questionText: "একাদশতম জাতীয় সংসদ নির্বাচন কবে অনুষ্ঠিত হবে?",
-  //     answerOptions: [
-  //       { answerText: "২৮শে ডিসেম্বর", isCorrect: false, id: 1 },
-  //       { answerText: "২৯শে ডিসেম্বর", isCorrect: false, id: 2 },
-  //       { answerText: "৩০শে ডিসেম্বর", isCorrect: true, id: 3 },
-  //       { answerText: "৩১শে ডিসেম্বর", isCorrect: false, id: 4 },
-  //     ],
-  //   },
-  //   {
-  //     questionText: "৩০শে ডিসেম্বর ২০১৮ কি বার?",
-  //     answerOptions: [
-  //       { answerText: "রবিবার", isCorrect: false, id: 1 },
-  //       { answerText: "সোমবার", isCorrect: true, id: 2 },
-  //       { answerText: "মঙ্গলবার", isCorrect: false, id: 3 },
-  //       { answerText: "বৃহস্পতিবার", isCorrect: false, id: 4 },
-  //     ],
-  //   },
-  //   {
-  //     questionText: "নির্বাচন কমিশন এবং নির্বাচন কমিশনারদের কে নিয়োগ দান করেন?",
-  //     answerOptions: [
-  //       { answerText: "প্রধানমন্ত্রী", isCorrect: true, id: 1 },
-  //       { answerText: "নির্বাচন কমিশন সচিবালয়", isCorrect: false, id: 2 },
-  //       { answerText: "মন্ত্রিপরিষদ", isCorrect: false, id: 3 },
-  //       { answerText: "রাষ্ট্রপতি", isCorrect: false, id: 4 },
-  //     ],
-  //   },
-  //   {
-  //     questionText: "একজন প্রার্থী নির্বাচনে কত টাকা খরচ করতে পারবেন?",
-  //     answerOptions: [
-  //       { answerText: "সর্বোচ্চ ১৫ লক্ষ টাকা", isCorrect: false, id: 1 },
-  //       { answerText: "সর্বোচ্চ ২০ লক্ষ টাকা", isCorrect: false, id: 2 },
-  //       { answerText: "সর্বোচ্চ ২৫ লক্ষ টাকা", isCorrect: false, id: 3 },
-  //       { answerText: "সর্বোচ্চ ৩০ লক্ষ টাকা", isCorrect: true, id: 4 },
-  //     ],
-  //   },
-  //   {
-  //     questionText: "বাংলাদেশের নির্বাচন ব্যবস্থা কি ধরনের?",
-  //     answerOptions: [
-  //       { answerText: "একক বিজয়ী ব্যবস্থা", isCorrect: false, id: 1 },
-  //       { answerText: "বহু বিজয়ী ব্যবস্থা", isCorrect: false, id: 2 },
-  //       { answerText: "পছন্দানুক্রম ব্যবস্থা", isCorrect: false, id: 3 },
-  //       {
-  //         answerText: "দলীয়-তালিকা আনুপাতিক প্রতিনিধিত্ব",
-  //         isCorrect: true,
-  //         id: 4,
-  //       },
-  //     ],
-  //   },
-  // ];
   const { quizLevel, quizStart, answerLoading, finalResult } = useSelector(
     state => state.quiz
   );
@@ -122,6 +71,7 @@ const QuizOne = () => {
     axios.defaults.headers.common["Authorization"] = `Bearer ${cookie.get(
       "token"
     )}`;
+    axios.defaults.headers.common["language"] = "en";
     axios
       .get("quiz/all")
       .then(res => {
@@ -247,6 +197,7 @@ const QuizOne = () => {
       const res = await axios.post("/participant/update", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          language: "en",
         },
       });
 
