@@ -6,14 +6,20 @@ import { setLogout } from "../store/actions/authAction";
 
 const Header = () => {
   const [sidebar, setSidebar] = useState(false);
-  const isAuthenticated = useSelector(state => state.auth.loggedIn);
+  const isAuthenticated = useSelector((state) => state.auth.loggedIn);
   console.log(sidebar);
   const dispatch = useDispatch();
-  const handleClick = e => {
+  const handleClick = (e) => {
     setSidebar(true);
   };
-  const handleClickToggle = e => {
+  const handleClickToggle = (e) => {
     setSidebar(false);
+  };
+
+  const handelLogout = async () => {
+    await dispatch(setLogout());
+    handleClickToggle();
+    window.location.replace("https://quizen.karonbangladeshamar.com/");
   };
 
   return (
@@ -120,7 +126,7 @@ const Header = () => {
 
                   {isAuthenticated ? (
                     <button
-                      onClick={e => dispatch(setLogout())}
+                      onClick={(e) => dispatch(setLogout())}
                       className="btn"
                     >
                       Logout
@@ -443,6 +449,39 @@ const Header = () => {
                   </a>
                 </li>
               </ul>
+            </li>
+            <li className="nav-item">
+              <a
+                className=""
+                href="https://karonbangladeshamar.com/en/category/about-us/"
+              >
+                About Us
+              </a>
+            </li>
+
+            <li className="nav-item">
+              <a
+                className=""
+                href="https://karonbangladeshamar.com/en/contact/"
+              >
+                Contact
+              </a>
+            </li>
+
+            <li className="nav-item">
+              {isAuthenticated ? (
+                <button
+                  onClick={(e) => handelLogout()}
+                  className="btn p-0"
+                  style={{ color: "#ccc" }}
+                >
+                 Logout
+                </button>
+              ) : (
+                <NavLink to="/login" className="">
+                  Login
+                </NavLink>
+              )}
             </li>
           </div>
         </div>
